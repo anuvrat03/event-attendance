@@ -6,17 +6,20 @@
     <title>Instant Event Attendance</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 400px; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; text-align: center; }
-        h2 { color: #2c3e50; margin-bottom: 5px; }
-        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; }
-        input, button { width: 100%; padding: 14px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 18px; }
-        /* Explicitly left-align text and placeholder to prevent cursor centering issues on mobile */
-        input { text-align: left; padding-left: 15px; }
+        .container { max-width: 400px; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #2c3e50; margin-bottom: 5px; text-align: center; }
+        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; font-size: 14px; }
+        input, button { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        input { text-align: left; padding-left: 12px; }
         input::placeholder { text-align: left; color: #999; }
-        button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
         button:hover { background: #219653; }
+        .setup-section { background: #eef2f3; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #34495e; }
+        .setup-section input { padding: 8px; font-size: 14px; margin-bottom: 8px; }
         .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; text-align: center; }
-        #statusMessage { margin-top: 20px; font-weight: bold; font-size: 15px; }
+        #statusMessage { margin-top: 15px; font-weight: bold; font-size: 14px; text-align: center; }
+        .toggle-btn { background: #34495e; font-size: 12px; padding: 6px; margin-top: 5px; }
+        .toggle-btn:hover { background: #2c3e50; }
     </style>
 </head>
 <body>
@@ -24,10 +27,20 @@
 <div class="container">
     <h2>Quick Attendance</h2>
     
+    <!-- Dynamic Venue Configuration Panel for Organizers -->
+    <div class="setup-section">
+        <strong>⚙️ Venue Setup (Organizer)</strong>
+        <label>Venue Latitude:</label>
+        <input type="text" id="venueLat" value="17.2352" placeholder="e.g. 17.2352">
+        <label>Venue Longitude:</label>
+        <input type="text" id="venueLon" value="78.5831" placeholder="e.g. 78.5831">
+        <label>Allowed Radius (Meters):</label>
+        <input type="number" id="venueRadius" value="50" placeholder="50">
+    </div>
+
     <div id="formSection">
         <label>Enter 4-Digit Code from Screen:</label>
-        <div class="pin-box" id="pinDisplay">----</div>
-        <!-- Input field formatted for left-aligned typing starting cleanly at the beginning -->
+        <div class="pin-box" id="pinDisplay">4829</div>
         <input type="text" id="pinInput" placeholder="Tap to enter code" pattern="[0-9]*" inputmode="numeric" maxlength="4">
 
         <button onclick="verifyAndSubmit()">Submit Attendance</button>
@@ -36,23 +49,12 @@
 </div>
 
 <script>
-    // Configured venue coordinates for Bongloor
-    const VENUE_LATITUDE = 17.2352; 
-    const VENUE_LONGITUDE = 78.5831; 
-    const ALLOWED_RADIUS_METERS = 30; // Strict geo-fence limit
-
     // Live Google Apps Script Web App endpoint integrated directly
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydGNdribjm_4DloWq-l8TmRNoVc_raRziV1oz1-ZtAjkVwwuF1l-sKwSOBX2Y6caaonA/exec";
 
-    let generatedPin = "";
+    let generatedPin = "4829";
 
-    // Load the active 4-digit numeric code shown on the presentation screen
-    function initPin() {
-        generatedPin = "4829"; 
-        document.getElementById("pinDisplay").innerText = generatedPin;
-    }
-
-    // Mathematical formula to compute exact distance in meters between student phone and venue
+    // Haversine formula to compute distance in meters between student device and dynamic venue coordinates
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3; 
         const φ1 = lat1 * Math.PI/180;
@@ -68,27 +70,38 @@
         return R * c; 
     }
 
-    // Handles the complete validation and logging pipeline
+    // Handles validation using dynamic venue parameters entered on the screen
     function verifyAndSubmit() {
         const userInput = document.getElementById("pinInput").value.trim();
         const statusMsg = document.getElementById("statusMessage");
 
+        // Fetch dynamic venue coordinates set by the organizer
+        const VENUE_LATITUDE = parseFloat(document.getElementById("venueLat").value);
+        const VENUE_LONGITUDE = parseFloat(document.getElementById("venueLon").value);
+        const ALLOWED_RADIUS_METERS = parseFloat(document.getElementById("venueRadius").value) || 50;
+
         if (userInput !== generatedPin) {
             statusMsg.style.color = "#e74c3c";
-            statusMsg.innerText = "Incorrect 4-digit code. Check the screen and try again.";
+            statusMsg.innerText = "Incorrect 4-digit code. Check screen and try again.";
+            return;
+        }
+
+        if (isNaN(VENUE_LATITUDE) || isNaN(VENUE_LONGITUDE)) {
+            statusMsg.style.color = "#e74c3c";
+            statusMsg.innerText = "Please enter valid organizer latitude and longitude.";
             return;
         }
 
         statusMsg.style.color = "#2980b9";
-        statusMsg.innerText = "Checking your location...";
+        statusMsg.innerText = "Requesting GPS location access...";
 
         if (!navigator.geolocation) {
             statusMsg.style.color = "#e74c3c";
-            statusMsg.innerText = "Geolocation is not supported by your browser.";
+            statusMsg.innerText = "Geolocation is not supported by your mobile browser.";
             return;
         }
 
-        // Fetch precise device GPS position
+        // Request student's GPS position
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLat = position.coords.latitude;
@@ -98,9 +111,9 @@
 
                 if (distance <= ALLOWED_RADIUS_METERS) {
                     statusMsg.style.color = "#2980b9";
-                    statusMsg.innerText = `Within range (~${Math.round(distance)}m). Saving attendance...`;
+                    statusMsg.innerText = `Within range (~${Math.round(distance)}m). Logging attendance...`;
 
-                    // Send verified attendance record to Google Sheet backend via Apps Script
+                    // Send verified attendance record to Google Sheet via Apps Script
                     fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         mode: "no-cors",
@@ -120,18 +133,16 @@
 
                 } else {
                     statusMsg.style.color = "#e74c3c";
-                    statusMsg.innerText = `Access Denied! You are ~${Math.round(distance)}m away (Must be within 30m).`;
+                    statusMsg.innerText = `Access Denied! You are ~${Math.round(distance)}m away (Must be within ${ALLOWED_RADIUS_METERS}m).`;
                 }
             },
             (error) => {
                 statusMsg.style.color = "#e74c3c";
-                statusMsg.innerText = "GPS access denied. Please enable location permissions.";
+                statusMsg.innerText = "Location permission denied or unavailable. Please enable GPS.";
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
     }
-
-    window.onload = initPin;
 </script>
 
 </body>
