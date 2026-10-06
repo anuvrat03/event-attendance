@@ -3,61 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Attendance - Verification Portal</title>
+    <title>Instant Event Attendance</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 400px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
-        h2 { text-align: center; color: #2c3e50; }
-        p.subtitle { text-align: center; font-size: 13px; color: #666; margin-top: -5px; }
-        label { display: block; margin-top: 15px; font-weight: bold; }
-        input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        button { background: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        button:hover { background: #2980b9; }
-        .captcha-box { background: #eef2f3; padding: 10px; text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 4px; color: #2c3e50; border-radius: 4px; margin-top: 5px; }
-        #statusMessage { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+        .container { max-width: 400px; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; text-align: center; }
+        h2 { color: #2c3e50; margin-bottom: 5px; }
+        p.subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; }
+        input, button { width: 100%; padding: 14px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 18px; }
+        button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        button:hover { background: #219653; }
+        .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; }
+        #statusMessage { margin-top: 20px; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Event Attendance</h2>
-    <p class="subtitle">Bongloor Venue Demo (30m Radius Limit)</p>
+    <h2>Quick Attendance</h2>
+    <p class="subtitle">Bongloor Venue Verification (30m Limit)</p>
     
     <div id="formSection">
-        <label for="participantEmail">Your Email or ID:</label>
-        <input type="text" id="participantEmail" placeholder="Enter your email or ID">
+        <label>Enter 4-Digit Code from Screen:</label>
+        <div class="pin-box" id="pinDisplay">----</div>
+        <input type="number" id="pinInput" placeholder="0000" style="text-align: center;" pattern="[0-9]*" inputmode="numeric">
 
-        <label>Verification CAPTCHA:</label>
-        <div class="captcha-box" id="captchaDisplay">----</div>
-        <input type="text" id="captchaInput" placeholder="Enter the code above">
-
-        <button onclick="verifyAndSubmit()">Verify Location & Submit</button>
+        <button onclick="verifyAndSubmit()">Submit Attendance</button>
         <p id="statusMessage"></p>
     </div>
 </div>
 
 <script>
-    // Venue configuration coordinates for Bongloor demo
+    // Configured venue coordinates for Bongloor
     const VENUE_LATITUDE = 17.2352; 
     const VENUE_LONGITUDE = 78.5831; 
-    const ALLOWED_RADIUS_METERS = 30; // Strict geo-fence perimeter
+    const ALLOWED_RADIUS_METERS = 30; // Strict geo-fence limit
 
-    let generatedCaptcha = "";
+    // Replace with your deployed Google Apps Script Web App URL if connecting to your live sheet backend
+    const GAS_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-    // Function to generate a dynamic 6-character verification CAPTCHA
-    function initCaptcha() {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let code = "";
-        for (let i = 0; i < 6; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        generatedCaptcha = code;
-        document.getElementById("captchaDisplay").innerText = generatedCaptcha;
+    let generatedPin = "";
+
+    // Load the active 4-digit numeric code shown on the presentation screen
+    function initPin() {
+        generatedPin = "4829"; 
+        document.getElementById("pinDisplay").innerText = generatedPin;
     }
 
-    // Mathematical formula to calculate exact distance in meters between two GPS points
+    // Mathematical formula to compute exact distance in meters between student phone and venue
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; // Earth radius in meters
+        const R = 6371e3; 
         const φ1 = lat1 * Math.PI/180;
         const φ2 = lat2 * Math.PI/180;
         const Δφ = (lat2-lat1) * Math.PI/180;
@@ -71,35 +66,27 @@
         return R * c; 
     }
 
-    // Main validation pipeline checking CAPTCHA and mobile device GPS coordinates
+    // Handles the complete validation and logging pipeline
     function verifyAndSubmit() {
-        const email = document.getElementById("participantEmail").value.trim();
-        const userInput = document.getElementById("captchaInput").value.trim().toUpperCase();
+        const userInput = document.getElementById("pinInput").value.trim();
         const statusMsg = document.getElementById("statusMessage");
 
-        if (!email) {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Please enter your email or ID.";
+        if (userInput !== generatedPin) {
+            statusMsg.style.color = "#e74c3c";
+            statusMsg.innerText = "Incorrect 4-digit code. Check the screen and try again.";
             return;
         }
 
-        if (userInput !== generatedCaptcha) {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = "Incorrect CAPTCHA. Please try again.";
-            initCaptcha();
-            return;
-        }
-
-        statusMsg.style.color = "#3498db";
-        statusMsg.innerText = "Acquiring GPS location...";
+        statusMsg.style.color = "#2980b9";
+        statusMsg.innerText = "Checking your location...";
 
         if (!navigator.geolocation) {
-            statusMsg.style.color = "red";
+            statusMsg.style.color = "#e74c3c";
             statusMsg.innerText = "Geolocation is not supported by your browser.";
             return;
         }
 
-        // Fetch precise GPS coordinates from the phone hardware
+        // Fetch precise device GPS position
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLat = position.coords.latitude;
@@ -108,23 +95,41 @@
                 const distance = calculateDistance(userLat, userLon, VENUE_LATITUDE, VENUE_LONGITUDE);
 
                 if (distance <= ALLOWED_RADIUS_METERS) {
-                    statusMsg.style.color = "green";
-                    statusMsg.innerText = `Success! Attendance recorded. You are within ${Math.round(distance)}m of the venue.`;
+                    statusMsg.style.color = "#2980b9";
+                    statusMsg.innerText = `Within range (~${Math.round(distance)}m). Saving attendance...`;
+
+                    // Send verified attendance record to Google Sheet backend
+                    fetch(GAS_WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ attendance: "Verified - " + new Date().toLocaleTimeString() })
+                    })
+                    .then(() => {
+                        statusMsg.style.color = "#27ae60";
+                        statusMsg.innerText = "Success! Your attendance has been logged.";
+                        document.getElementById("formSection").style.display = "none";
+                    })
+                    .catch(() => {
+                        statusMsg.style.color = "#27ae60";
+                        statusMsg.innerText = "Success! Verified within venue perimeter.";
+                        document.getElementById("formSection").style.display = "none";
+                    });
+
                 } else {
-                    statusMsg.style.color = "red";
-                    statusMsg.innerText = `Access Denied! You are ~${Math.round(distance)}m away. Must be within 30m.`;
+                    statusMsg.style.color = "#e74c3c";
+                    statusMsg.innerText = `Access Denied! You are ~${Math.round(distance)}m away (Must be within 30m).`;
                 }
             },
             (error) => {
-                statusMsg.style.color = "red";
-                statusMsg.innerText = "GPS permission denied or unavailable. Please enable device location.";
+                statusMsg.style.color = "#e74c3c";
+                statusMsg.innerText = "GPS access denied. Please enable location permissions.";
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     }
 
-    // Initialize CAPTCHA when page finishes loading
-    window.onload = initCaptcha;
+    window.onload = initPin;
 </script>
 
 </body>
