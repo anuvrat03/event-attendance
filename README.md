@@ -1,22 +1,22 @@
-# Event Attendance Verification Portal
+# Instant Mobile Attendance System (Bongloor Venue)
 
-A lightweight, mobile-friendly web application designed for academic events, faculty workshops, and student gatherings. It eliminates proxy attendance and saves valuable time by combining a randomized verification CAPTCHA with strict device-level GPS geo-fencing (30-meter proximity radius).
+A lightweight, high-speed, geo-fenced attendance tracking system designed for academic workshops and events. Built to prevent proxy attendance and maximize efficiency for participants using mobile devices.
 
-## 🚀 Key Features
-* **Geo-Fence Security:** Verifies that attendees are physically present within 30 meters of the event venue using device GPS coordinates.
-* **Dynamic CAPTCHA:** Generates a unique 6-character alphanumeric code per session to prevent automated or remote bot submissions.
-* **Mobile Optimized:** Built to run seamlessly on modern smartphones directly through mobile browsers.
-* **Zero Cost Deployment:** Hosted easily and for free via GitHub Pages.
+## Features
+- **Zero-Friction Entry:** Participants simply open a mobile web link, enter a 4-digit numeric code displayed on the presentation screen, and tap submit.
+- **Strict Geo-Fencing:** Utilizes device GPS and the Haversine formula to enforce a strict 30-meter proximity perimeter around the venue (Bongloor, Telangana).
+- **Automated Logging:** Instantly records verified attendance timestamps directly into a centralized Google Sheet via a Google Apps Script backend.
+- **Mobile-Optimized:** Fully functional on mobile browsers, built and maintained entirely via mobile development tools (Samsung S20 FE, TrebEdit, GitHub Pages, and Google Workspace).
 
-## 🛠️ Technology Stack
-* **Frontend:** HTML5, CSS3, Vanilla JavaScript (Geolocation API & Haversine Formula).
-* **Hosting:** GitHub Pages.
-* **Development Environment:** Built and tested entirely on mobile devices using TrebEdit and GitHub.
+## Tech Stack
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript (Hosted on GitHub Pages).
+- **Backend:** Google Apps Script Web App (`doPost` handler with CORS headers).
+- **Database:** Google Sheets.
 
-## ⚙️ Configuration & Setup
-1. **Clone or Download:** Fork this repository or download the `index.html` file.
-2. **Update Venue Coordinates:** Open `index.html` and modify the latitude and longitude variables to match your specific event location:
-   ```javascript
-   const VENUE_LATITUDE = your_latitude_here; 
-   const VENUE_LONGITUDE = your_longitude_here; 
-   const ALLOWED_RADIUS_METERS = 30; // Adjust radius if needed
+## Deployment & Usage SOP
+1. **Presenter (Faculty):** Display the active 4-digit numeric code on the screen or projector.
+2. **Participant:** 
+   - Open the GitHub Pages link on their smartphone.
+   - Ensure phone location/GPS permissions are enabled.
+   - Enter the 4-digit code and tap **Submit Attendance**.
+3. **Verification:** The system verifies proximity within 30 meters of the venue coordinates (`17.2352, 78.5831`) and automatically logs the entry into the Google Sheet.
