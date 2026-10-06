@@ -29,9 +29,11 @@
 <div class="container">
     <h2>Quick Attendance</h2>
     
-    <!-- Organizer Configuration Panel: Venue Setup & Radius Adjustment -->
+    <!-- Organizer Configuration Panel: Venue Setup, Event ID, & Radius Adjustment -->
     <div class="setup-section">
         <strong>⚙️ Venue Setup (For Organizer)</strong>
+        <label>Event ID / Workshop Name:</label>
+        <input type="text" id="eventIdInput" value="AI_WORKSHOP_01" placeholder="e.g. AI_WORKSHOP_01">
         <label>Venue Latitude:</label>
         <input type="text" id="venueLat" value="17.2352" placeholder="e.g. 17.2352">
         <label>Venue Longitude:</label>
@@ -119,7 +121,8 @@
         const userInput = document.getElementById("pinInput").value.trim();
         const statusMsg = document.getElementById("statusMessage");
 
-        // Read the venue coordinates and customized radius currently specified in the organizer panel
+        // Read event ID, venue coordinates, and radius specified in the organizer panel
+        const eventId = document.getElementById("eventIdInput").value.trim() || "GENERAL_EVENT";
         const VENUE_LATITUDE = parseFloat(document.getElementById("venueLat").value);
         const VENUE_LONGITUDE = parseFloat(document.getElementById("venueLon").value);
         const ALLOWED_RADIUS_METERS = parseFloat(document.getElementById("venueRadius").value) || 50;
@@ -157,12 +160,15 @@
                     statusMsg.style.color = "#2980b9";
                     statusMsg.innerText = `Within range (~${Math.round(distance)}m). Logging attendance...`;
 
-                    // Send verified attendance record to Google Sheet backend
+                    // Send verified attendance record including Event ID to Google Sheet backend
                     fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         mode: "no-cors",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ attendance: "Verified - " + new Date().toLocaleTimeString() })
+                        body: JSON.stringify({ 
+                            eventId: eventId,
+                            attendance: "Verified - " + new Date().toLocaleTimeString() 
+                        })
                     })
                     .then(() => {
                         statusMsg.style.color = "#27ae60";
