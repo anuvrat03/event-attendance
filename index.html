@@ -14,7 +14,7 @@
         input::placeholder { text-align: left; color: #999; }
         button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
         button:hover { background: #219653; }
-        .setup-section { background: #eef2f3; padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #34495e; border: 1px solid #cbd5e1; }
+        .setup-section { background: #eef2f3; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #34495e; border: 1px solid #cbd5e1; }
         .setup-section input { padding: 8px; font-size: 14px; margin-bottom: 6px; background: #fff; }
         .organizer-btn { background: #2980b9; font-size: 13px; padding: 10px; margin-top: 8px; }
         .organizer-btn:hover { background: #2471a3; }
@@ -27,7 +27,7 @@
 <div class="container">
     <h2>Quick Attendance</h2>
     
-    <!-- Organizer Venue Configuration Panel -->
+    <!-- Organizer Configuration Panel: Used by faculty to set the venue before class -->
     <div class="setup-section">
         <strong>⚙️ Venue Setup (For Organizer)</strong>
         <label>Venue Latitude:</label>
@@ -37,10 +37,10 @@
         <label>Allowed Radius (Meters):</label>
         <input type="number" id="venueRadius" value="50" placeholder="50">
         
-        <!-- Quick button for organizer to set venue location automatically from where they are standing -->
         <button type="button" class="organizer-btn" onclick="setOrganizerLocation()">📍 Set Venue to My Current Location</button>
     </div>
 
+    <!-- Student Attendance Section -->
     <div id="formSection">
         <label>Enter 4-Digit Code from Screen:</label>
         <div class="pin-box" id="pinDisplay">4829</div>
@@ -57,7 +57,7 @@
 
     let generatedPin = "4829";
 
-    // Function allowing the organizer to grab their precise GPS coordinates as the venue marker
+    // Automatically fetch and fill organizer's current GPS location into the venue setup boxes
     function setOrganizerLocation() {
         const statusMsg = document.getElementById("statusMessage");
         if (!navigator.geolocation) {
@@ -82,7 +82,7 @@
         );
     }
 
-    // Haversine formula to compute distance in meters between student device and venue coordinates
+    // Mathematical formula (Haversine) to compute exact distance in meters between student and venue
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3; 
         const φ1 = lat1 * Math.PI/180;
@@ -98,12 +98,12 @@
         return R * c; 
     }
 
-    // Handles validation using dynamic venue parameters entered on the screen
+    // Verifies the student's 4-digit code and checks if their phone GPS is within the allowed radius of the venue
     function verifyAndSubmit() {
         const userInput = document.getElementById("pinInput").value.trim();
         const statusMsg = document.getElementById("statusMessage");
 
-        // Fetch dynamic venue coordinates set by the organizer
+        // Read the venue coordinates currently specified in the organizer panel
         const VENUE_LATITUDE = parseFloat(document.getElementById("venueLat").value);
         const VENUE_LONGITUDE = parseFloat(document.getElementById("venueLon").value);
         const ALLOWED_RADIUS_METERS = parseFloat(document.getElementById("venueRadius").value) || 50;
@@ -129,7 +129,7 @@
             return;
         }
 
-        // Request student's GPS position
+        // Fetch student's precise device GPS location
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLat = position.coords.latitude;
@@ -141,7 +141,7 @@
                     statusMsg.style.color = "#2980b9";
                     statusMsg.innerText = `Within range (~${Math.round(distance)}m). Logging attendance...`;
 
-                    // Send verified attendance record to Google Sheet via Apps Script
+                    // Send verified attendance record to Google Sheet backend
                     fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         mode: "no-cors",
