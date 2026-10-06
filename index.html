@@ -8,18 +8,18 @@
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 400px; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; }
         h2 { color: #2c3e50; margin-bottom: 5px; text-align: center; }
-        label { display: block; margin-top: 15px; font-weight: bold; text-align: left; font-size: 14px; }
+        label { display: block; margin-top: 12px; font-weight: bold; text-align: left; font-size: 13px; }
         input, button { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         input { text-align: left; padding-left: 12px; }
         input::placeholder { text-align: left; color: #999; }
-        button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
         button:hover { background: #219653; }
-        .setup-section { background: #eef2f3; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #34495e; }
-        .setup-section input { padding: 8px; font-size: 14px; margin-bottom: 8px; }
+        .setup-section { background: #eef2f3; padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #34495e; border: 1px solid #cbd5e1; }
+        .setup-section input { padding: 8px; font-size: 14px; margin-bottom: 6px; background: #fff; }
+        .organizer-btn { background: #2980b9; font-size: 13px; padding: 10px; margin-top: 8px; }
+        .organizer-btn:hover { background: #2471a3; }
         .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; text-align: center; }
         #statusMessage { margin-top: 15px; font-weight: bold; font-size: 14px; text-align: center; }
-        .toggle-btn { background: #34495e; font-size: 12px; padding: 6px; margin-top: 5px; }
-        .toggle-btn:hover { background: #2c3e50; }
     </style>
 </head>
 <body>
@@ -27,15 +27,18 @@
 <div class="container">
     <h2>Quick Attendance</h2>
     
-    <!-- Dynamic Venue Configuration Panel for Organizers -->
+    <!-- Organizer Venue Configuration Panel -->
     <div class="setup-section">
-        <strong>⚙️ Venue Setup (Organizer)</strong>
+        <strong>⚙️ Venue Setup (For Organizer)</strong>
         <label>Venue Latitude:</label>
         <input type="text" id="venueLat" value="17.2352" placeholder="e.g. 17.2352">
         <label>Venue Longitude:</label>
         <input type="text" id="venueLon" value="78.5831" placeholder="e.g. 78.5831">
         <label>Allowed Radius (Meters):</label>
         <input type="number" id="venueRadius" value="50" placeholder="50">
+        
+        <!-- Quick button for organizer to set venue location automatically from where they are standing -->
+        <button type="button" class="organizer-btn" onclick="setOrganizerLocation()">📍 Set Venue to My Current Location</button>
     </div>
 
     <div id="formSection">
@@ -54,7 +57,32 @@
 
     let generatedPin = "4829";
 
-    // Haversine formula to compute distance in meters between student device and dynamic venue coordinates
+    // Function allowing the organizer to grab their precise GPS coordinates as the venue marker
+    function setOrganizerLocation() {
+        const statusMsg = document.getElementById("statusMessage");
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+        statusMsg.style.color = "#2980b9";
+        statusMsg.innerText = "Detecting your current venue location...";
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                document.getElementById("venueLat").value = position.coords.latitude.toFixed(6);
+                document.getElementById("venueLon").value = position.coords.longitude.toFixed(6);
+                statusMsg.style.color = "#27ae60";
+                statusMsg.innerText = "Venue coordinates updated successfully!";
+            },
+            (error) => {
+                statusMsg.style.color = "#e74c3c";
+                statusMsg.innerText = "Could not fetch location. Please enable GPS permissions.";
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    // Haversine formula to compute distance in meters between student device and venue coordinates
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3; 
         const φ1 = lat1 * Math.PI/180;
@@ -88,12 +116,12 @@
 
         if (isNaN(VENUE_LATITUDE) || isNaN(VENUE_LONGITUDE)) {
             statusMsg.style.color = "#e74c3c";
-            statusMsg.innerText = "Please enter valid organizer latitude and longitude.";
+            statusMsg.innerText = "Please enter valid venue latitude and longitude.";
             return;
         }
 
         statusMsg.style.color = "#2980b9";
-        statusMsg.innerText = "Requesting GPS location access...";
+        statusMsg.innerText = "Requesting your GPS location access...";
 
         if (!navigator.geolocation) {
             statusMsg.style.color = "#e74c3c";
