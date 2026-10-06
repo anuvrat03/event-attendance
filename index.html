@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Attendance - Verification Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 400px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #2c3e50; }
+        p.subtitle { text-align: center; font-size: 13px; color: #666; margin-top: -5px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        button { background: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button:hover { background: #2980b9; }
+        .captcha-box { background: #eef2f3; padding: 10px; text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 4px; color: #2c3e50; border-radius: 4px; margin-top: 5px; }
+        #statusMessage { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Event Attendance</h2>
+    <p class="subtitle">Bongloor Venue Demo (30m Radius Limit)</p>
+    
+    <div id="formSection">
+        <label for="participantEmail">Your Email or ID:</label>
+        <input type="text" id="participantEmail" placeholder="Enter your email or ID">
+
+        <label>Verification CAPTCHA:</label>
+        <div class="captcha-box" id="captchaDisplay">----</div>
+        <input type="text" id="captchaInput" placeholder="Enter the code above">
+
+        <button onclick="verifyAndSubmit()">Verify Location & Submit</button>
+        <p id="statusMessage"></p>
+    </div>
+</div>
+
+<script>
+    // Venue configuration coordinates for Bongloor demo
+    const VENUE_LATITUDE = 17.2352; 
+    const VENUE_LONGITUDE = 78.5831; 
+    const ALLOWED_RADIUS_METERS = 30; // Strict geo-fence perimeter
+
+    let generatedCaptcha = "";
+
+    // Function to generate a dynamic 6-character verification CAPTCHA
+    function initCaptcha() {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "";
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        generatedCaptcha = code;
+        document.getElementById("captchaDisplay").innerText = generatedCaptcha;
+    }
+
+    // Mathematical formula to calculate exact distance in meters between two GPS points
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Earth radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+        return R * c; 
+    }
+
+    // Main validation pipeline checking CAPTCHA and mobile device GPS coordinates
+    function verifyAndSubmit() {
+        const email = document.getElementById("participantEmail").value.trim();
+        const userInput = document.getElementById("captchaInput").value.trim().toUpperCase();
+        const statusMsg = document.getElementById("statusMessage");
+
+        if (!email) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Please enter your email or ID.";
+            return;
+        }
+
+        if (userInput !== generatedCaptcha) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Incorrect CAPTCHA. Please try again.";
+            initCaptcha();
+            return;
+        }
+
+        statusMsg.style.color = "#3498db";
+        statusMsg.innerText = "Acquiring GPS location...";
+
+        if (!navigator.geolocation) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Geolocation is not supported by your browser.";
+            return;
+        }
+
+        // Fetch precise GPS coordinates from the phone hardware
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLon = position.coords.longitude;
+
+                const distance = calculateDistance(userLat, userLon, VENUE_LATITUDE, VENUE_LONGITUDE);
+
+                if (distance <= ALLOWED_RADIUS_METERS) {
+                    statusMsg.style.color = "green";
+                    statusMsg.innerText = `Success! Attendance recorded. You are within ${Math.round(distance)}m of the venue.`;
+                } else {
+                    statusMsg.style.color = "red";
+                    statusMsg.innerText = `Access Denied! You are ~${Math.round(distance)}m away. Must be within 30m.`;
+                }
+            },
+            (error) => {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = "GPS permission denied or unavailable. Please enable device location.";
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    // Initialize CAPTCHA when page finishes loading
+    window.onload = initCaptcha;
+</script>
+
+</body>
+</html>
