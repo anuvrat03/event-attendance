@@ -18,6 +18,8 @@
         .setup-section input { padding: 8px; font-size: 14px; margin-bottom: 6px; background: #fff; }
         .organizer-btn { background: #2980b9; font-size: 13px; padding: 10px; margin-top: 8px; }
         .organizer-btn:hover { background: #2471a3; }
+        .share-btn { background: #8e44ad; font-size: 13px; padding: 10px; margin-top: 8px; }
+        .share-btn:hover { background: #732d91; }
         .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; text-align: center; }
         #statusMessage { margin-top: 15px; font-weight: bold; font-size: 14px; text-align: center; }
     </style>
@@ -27,7 +29,7 @@
 <div class="container">
     <h2>Quick Attendance</h2>
     
-    <!-- Organizer Configuration Panel: Used by faculty to set the venue before class -->
+    <!-- Organizer Configuration Panel: Venue Setup & Radius Adjustment -->
     <div class="setup-section">
         <strong>⚙️ Venue Setup (For Organizer)</strong>
         <label>Venue Latitude:</label>
@@ -38,6 +40,7 @@
         <input type="number" id="venueRadius" value="50" placeholder="50">
         
         <button type="button" class="organizer-btn" onclick="setOrganizerLocation()">📍 Set Venue to My Current Location</button>
+        <button type="button" class="share-btn" onclick="copyShareLink()">🔗 Copy Link to Share with Students</button>
     </div>
 
     <!-- Student Attendance Section -->
@@ -84,6 +87,17 @@
         );
     }
 
+    // Copy current page link to clipboard so organizer can easily share it via WhatsApp or projection
+    function copyShareLink() {
+        const statusMsg = document.getElementById("statusMessage");
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            statusMsg.style.color = "#8e44ad";
+            statusMsg.innerText = "Link copied to clipboard! Share it with your students.";
+        }).catch(() => {
+            alert("Share this link: " + window.location.href);
+        });
+    }
+
     // Mathematical formula (Haversine) to compute exact distance in meters between student and venue
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3; 
@@ -100,12 +114,12 @@
         return R * c; 
     }
 
-    // Verifies the student's 4-digit code and checks if their phone GPS is within the allowed radius of the venue
+    // Verifies the student's 4-digit code and checks if their phone GPS is within the dynamically defined radius
     function verifyAndSubmit() {
         const userInput = document.getElementById("pinInput").value.trim();
         const statusMsg = document.getElementById("statusMessage");
 
-        // Read the venue coordinates currently specified in the organizer panel
+        // Read the venue coordinates and customized radius currently specified in the organizer panel
         const VENUE_LATITUDE = parseFloat(document.getElementById("venueLat").value);
         const VENUE_LONGITUDE = parseFloat(document.getElementById("venueLon").value);
         const ALLOWED_RADIUS_METERS = parseFloat(document.getElementById("venueRadius").value) || 50;
