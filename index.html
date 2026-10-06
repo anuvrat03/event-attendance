@@ -43,7 +43,7 @@
     <!-- Student Attendance Section -->
     <div id="formSection">
         <label>Enter 4-Digit Code from Screen:</label>
-        <div class="pin-box" id="pinDisplay">4829</div>
+        <div class="pin-box" id="pinDisplay">----</div>
         <input type="text" id="pinInput" placeholder="Tap to enter code" pattern="[0-9]*" inputmode="numeric" maxlength="4">
 
         <button onclick="verifyAndSubmit()">Submit Attendance</button>
@@ -55,7 +55,9 @@
     // Live Google Apps Script Web App endpoint integrated directly
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydGNdribjm_4DloWq-l8TmRNoVc_raRziV1oz1-ZtAjkVwwuF1l-sKwSOBX2Y6caaonA/exec";
 
-    let generatedPin = "4829";
+    // Automatically generate a random 4-digit code on page load
+    let generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
+    document.getElementById("pinDisplay").innerText = generatedPin;
 
     // Automatically fetch and fill organizer's current GPS location into the venue setup boxes
     function setOrganizerLocation() {
