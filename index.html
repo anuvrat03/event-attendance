@@ -8,12 +8,14 @@
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 400px; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; text-align: center; }
         h2 { color: #2c3e50; margin-bottom: 5px; }
-        p.subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-weight: bold; text-align: left; }
         input, button { width: 100%; padding: 14px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 18px; }
+        /* Explicitly left-align text and placeholder to prevent cursor centering issues on mobile */
+        input { text-align: left; padding-left: 15px; }
+        input::placeholder { text-align: left; color: #999; }
         button { background: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; }
         button:hover { background: #219653; }
-        .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; }
+        .pin-box { background: #eef2f3; padding: 15px; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2c3e50; border-radius: 6px; margin-top: 8px; text-align: center; }
         #statusMessage { margin-top: 20px; font-weight: bold; font-size: 15px; }
     </style>
 </head>
@@ -21,12 +23,12 @@
 
 <div class="container">
     <h2>Quick Attendance</h2>
-    <p class="subtitle">Quick Attendance</p>
     
     <div id="formSection">
         <label>Enter 4-Digit Code from Screen:</label>
         <div class="pin-box" id="pinDisplay">----</div>
-        <input type="number" id="pinInput" placeholder="0000" style="text-align: center;" pattern="[0-9]*" inputmode="numeric">
+        <!-- Input field formatted for left-aligned typing starting cleanly at the beginning -->
+        <input type="text" id="pinInput" placeholder="Tap to enter code" pattern="[0-9]*" inputmode="numeric" maxlength="4">
 
         <button onclick="verifyAndSubmit()">Submit Attendance</button>
         <p id="statusMessage"></p>
