@@ -39,8 +39,8 @@
     const VENUE_LONGITUDE = 78.5831; 
     const ALLOWED_RADIUS_METERS = 30; // Strict geo-fence limit
 
-    // Replace with your deployed Google Apps Script Web App URL if connecting to your live sheet backend
-    const GAS_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+    // Live Google Apps Script Web App endpoint integrated directly
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydGNdribjm_4DloWq-l8TmRNoVc_raRziV1oz1-ZtAjkVwwuF1l-sKwSOBX2Y6caaonA/exec";
 
     let generatedPin = "";
 
@@ -98,7 +98,7 @@
                     statusMsg.style.color = "#2980b9";
                     statusMsg.innerText = `Within range (~${Math.round(distance)}m). Saving attendance...`;
 
-                    // Send verified attendance record to Google Sheet backend
+                    // Send verified attendance record to Google Sheet backend via Apps Script
                     fetch(GAS_WEB_APP_URL, {
                         method: "POST",
                         mode: "no-cors",
